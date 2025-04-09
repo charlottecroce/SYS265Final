@@ -15,3 +15,6 @@ ___
 </div>
 
 ![network diagram](diagrams/diagram2.png)
+
+
+.
