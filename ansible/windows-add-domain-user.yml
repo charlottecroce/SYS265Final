@@ -1,0 +1,15 @@
+- name: "add windows domain user"
+  hosts: dc1-darkevil
+  vars:
+    domain_username: "ansible-test"
+    domain_password: "ansible123!"
+    domain_ou: "CN=Users,DC=dark-evil,DC=local"
+  
+  tasks:
+    - name: "create domain user"
+      win_domain_user:
+        name: "{{ domain_username }}"
+        password: "{{ domain_password }}"
+        state: present
+        password_never_expires: yes
+        path: "{{ domain_ou }}"
