@@ -1,0 +1,19 @@
+- name: "install tcpdump through yum"
+  hosts: util-darkevil
+
+  vars_prompt:
+    - name: ansible_become_sudo
+      prompt: "sudo password (deployer)"
+      private: yes
+
+  tasks:
+    - name: "yum update"
+      ansible.builtin.yum:
+        update_cache: yes
+      become: yes
+
+    - name: "install tcpdump"
+      ansible.builtin.yum:
+        name: tcpdump
+        state: present
+      become: yes
