@@ -1,0 +1,23 @@
+- name: "add linux local user"
+  hosts: linux
+  
+  vars_prompt:
+    - name: ansible_become_pass
+      prompt: "sudo password (deployer)"
+      private: yes
+  
+  vars:
+    user_name: "ansible-test-linux1"
+    user_pass: "ansible123!"
+    user_shell: "/bin/bash"
+  
+  tasks:
+    - name: "create linux local user"
+      user:
+        name: "{{ user_name }}"
+        password: "{{ user_pass | password_hash('sha512') }}"
+        shell: "{{ user_shell }}"
+        state: present
+        create_home: yes
+        register: user_creation
+        become: yes
