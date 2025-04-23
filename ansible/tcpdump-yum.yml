@@ -2,7 +2,7 @@
   hosts: util-darkevil
 
   vars_prompt:
-    - name: ansible_become_sudo
+    - name: ansible_become_pass
       prompt: "sudo password (deployer)"
       private: yes
 
