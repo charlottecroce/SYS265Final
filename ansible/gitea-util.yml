@@ -1,0 +1,91 @@
+- name: Install Gitea Server Util-Darkevil
+  hosts: util-darkevil
+  become: true
+  vars:
+    gitea_version: "1.21.7"
+    gitea_installation_path: "/usr/local/bin"
+    gitea_work_dir: "/var/lib/gitea"
+    gitea_user: "git"
+    gitea_group: "git"
+    
+  tasks:
+    - name: Install required packages
+      yum:
+        name: 
+          - git
+          - wget
+          - epel-release
+        state: present
+        update_cache: yes
+      
+    - name: Create Gitea directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ gitea_user }}"
+        group: "{{ gitea_group }}"
+        mode: 0750
+      with_items:
+        - "/etc/gitea"
+        - "{{ gitea_work_dir }}/custom"
+        - "{{ gitea_work_dir }}/data"
+        - "{{ gitea_work_dir }}/indexers"
+        - "{{ gitea_work_dir }}/public"
+        - "{{ gitea_work_dir }}/log"
+    
+    - name: Download Gitea binary
+      get_url:
+        url: "https://dl.gitea.io/gitea/{{ gitea_version }}/gitea-{{ gitea_version }}-linux-amd64"
+        dest: "{{ gitea_installation_path }}/gitea"
+        mode: 0755
+    
+    - name: Create Gitea service file
+      copy:
+        dest: /etc/systemd/system/gitea.service
+        content: |
+          [Unit]
+          Description=Gitea (Git with a cup of tea)
+          After=network.target
+          Wants=network.target
+          
+          [Service]
+          Type=simple
+          User={{ gitea_user }}
+          Group={{ gitea_group }}
+          WorkingDirectory={{ gitea_work_dir }}
+          ExecStart={{ gitea_installation_path }}/gitea web --config /etc/gitea/app.ini
+          Restart=always
+          Environment=USER={{ gitea_user }} HOME=/home/{{ gitea_user }} GITEA_WORK_DIR={{ gitea_work_dir }}
+          
+          [Install]
+          WantedBy=multi-user.target
+        mode: 0644
+    
+    - name: Create configuration file
+      copy:
+        dest: /etc/gitea/app.ini
+        content: |
+          [repository]
+          ROOT = {{ gitea_work_dir }}/data/gitea-repositories
+          
+          [database]
+          DB_TYPE = sqlite3
+          PATH = {{ gitea_work_dir }}/data/gitea.db
+          
+          [server]
+          DOMAIN = localhost
+          HTTP_PORT = 3000
+          ROOT_URL = http://localhost:3000/
+          
+          [log]
+          ROOT_PATH = {{ gitea_work_dir }}/log
+        owner: "{{ gitea_user }}"
+        group: "{{ gitea_group }}"
+        mode: 0640
+      
+    - name: Start and enable Gitea service
+      systemd:
+        name: gitea
+        state: started
+        enabled: yes
+        daemon_reload: yes
